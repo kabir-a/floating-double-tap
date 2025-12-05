@@ -18,13 +18,14 @@ jobs:
           sudo apt update
           sudo apt install -y unzip wget openjdk-17-jdk
 
-      # 3️⃣ Unzip project
+      # 3️⃣ Unzip project and detect root folder
       - name: Unzip Project
         run: |
           unzip -o FloatingDoubleTapProject.zip -d ./project
-          # Detect project root folder
-          PROJECT_DIR=$(find ./project -mindepth 1 -maxdepth 1 -type d | head -n 1)
+          # Detect the first folder inside ./project (project root)
+          PROJECT_DIR=$(find ./project -mindepth 1 -maxdepth 1 -type d | head -n 1 || echo "./project")
           echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
+          echo "Detected project root: $PROJECT_DIR"
           ls $PROJECT_DIR
 
       # 4️⃣ Set up Android SDK
