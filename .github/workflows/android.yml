@@ -1,4 +1,4 @@
-name: Build Android APK with Gradle Wrapper
+name: Build Android APK
 
 on:
   workflow_dispatch:
@@ -12,23 +12,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Install required tools
+      # 2️⃣ Install dependencies
       - name: Install tools
         run: |
           sudo apt update
           sudo apt install -y unzip wget openjdk-17-jdk
 
-      # 3️⃣ Unzip project and detect root folder
+      # 3️⃣ Unzip uploaded project
       - name: Unzip Project
         run: |
           unzip -o FloatingDoubleTapProject.zip -d ./project
-          # Detect the first folder inside ./project (project root)
-          PROJECT_DIR=$(find ./project -mindepth 1 -maxdepth 1 -type d | head -n 1 || echo "./project")
+          PROJECT_DIR=$(find ./project -mindepth 1 -maxdepth 1 -type d | head -n 1)
           echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
-          echo "Detected project root: $PROJECT_DIR"
-          ls $PROJECT_DIR
+          echo "Project root detected: $PROJECT_DIR"
+          ls -R $PROJECT_DIR
 
-      # 4️⃣ Set up Android SDK
+      # 4️⃣ Install Android SDK
       - name: Setup Android SDK
         run: |
           mkdir -p $HOME/android-sdk/cmdline-tools
@@ -46,11 +45,11 @@ jobs:
       - name: Make Gradle Wrapper executable
         run: chmod +x ${{ env.PROJECT_DIR }}/gradlew
 
-      # 6️⃣ Build Debug APK
+      # 6️⃣ Build the APK (APP MODULE ONLY)
       - name: Build APK
         run: |
           cd ${{ env.PROJECT_DIR }}
-          ./gradlew assembleDebug
+          ./gradlew :app:assembleDebug
 
       # 7️⃣ Upload APK artifact
       - name: Upload APK
