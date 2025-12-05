@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout the repo
+      # 1️⃣ Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -18,11 +18,14 @@ jobs:
           sudo apt update
           sudo apt install -y unzip wget
 
-      # 3️⃣ Unzip the project
+      # 3️⃣ Unzip project and detect folder
       - name: Unzip Project
         run: |
           unzip -o FloatingDoubleTapProject.zip -d ./project
-          ls ./project
+          # Detect the first folder inside ./project
+          PROJECT_DIR=$(find ./project -mindepth 1 -maxdepth 1 -type d | head -n 1)
+          echo "Project directory: $PROJECT_DIR"
+          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
 
       # 4️⃣ Set up Java
       - name: Set up Java
@@ -47,15 +50,15 @@ jobs:
 
       # 6️⃣ Make Gradle wrapper executable
       - name: Make Gradle Wrapper executable
-        run: chmod +x ./project/gradlew
+        run: chmod +x ${{ env.PROJECT_DIR }}/gradlew
 
-      # 7️⃣ Build APK
-      - name: Build Debug APK
-        run: ./project/gradlew assembleDebug
+      # 7️⃣ Build Debug APK
+      - name: Build APK
+        run: ${{ env.PROJECT_DIR }}/gradlew assembleDebug
 
       # 8️⃣ Upload APK artifact
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug.apk
-          path: ./project/app/build/outputs/apk/debug/app-debug.apk
+          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/app-debug.apk
