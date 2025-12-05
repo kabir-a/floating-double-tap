@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Android APK from ZIP
 
 on:
   workflow_dispatch:
@@ -12,18 +12,28 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Set up JDK 17
+      # 2️⃣ Install required tools
+      - name: Install tools
+        run: |
+          sudo apt update
+          sudo apt install -y unzip wget
+
+      # 3️⃣ Unzip the project
+      - name: Unzip Project
+        run: |
+          unzip -o FloatingDoubleTapProject.zip -d ./project
+          ls ./project
+
+      # 4️⃣ Set up Java
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
-      # 3️⃣ Install Android SDK & build-tools
+      # 5️⃣ Setup Android SDK
       - name: Setup Android SDK
         run: |
-          sudo apt update
-          sudo apt install -y wget unzip
           mkdir -p $HOME/android-sdk/cmdline-tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
           unzip cmdline-tools.zip -d $HOME/android-sdk/cmdline-tools
@@ -35,17 +45,17 @@ jobs:
           yes | sdkmanager --licenses
           sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
-      # 4️⃣ Make Gradle wrapper executable
+      # 6️⃣ Make Gradle wrapper executable
       - name: Make Gradle Wrapper executable
-        run: chmod +x ./gradlew
+        run: chmod +x ./project/gradlew
 
-      # 5️⃣ Build APK
+      # 7️⃣ Build APK
       - name: Build Debug APK
-        run: ./gradlew assembleDebug
+        run: ./project/gradlew assembleDebug
 
-      # 6️⃣ Upload APK as artifact
+      # 8️⃣ Upload APK artifact
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug.apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: ./project/app/build/outputs/apk/debug/app-debug.apk
