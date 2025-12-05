@@ -22,9 +22,9 @@ jobs:
       - name: Unzip Project
         run: |
           unzip -o FloatingDoubleTapProject.zip -d ./project
-          # Detect the first folder inside ./project
+          # Detect the first folder inside ./project (project root)
           PROJECT_DIR=$(find ./project -mindepth 1 -maxdepth 1 -type d | head -n 1)
-          echo "Project directory: $PROJECT_DIR"
+          echo "Detected project directory: $PROJECT_DIR"
           echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
 
       # 4️⃣ Set up Java
