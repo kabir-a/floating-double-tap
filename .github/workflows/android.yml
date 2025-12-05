@@ -1,4 +1,4 @@
-name: Build Android APK from ZIP
+name: Build Android APK from ZIP (No Gradle Wrapper)
 
 on:
   workflow_dispatch:
@@ -16,25 +16,17 @@ jobs:
       - name: Install tools
         run: |
           sudo apt update
-          sudo apt install -y unzip wget
+          sudo apt install -y unzip wget openjdk-17-jdk gradle
 
-      # 3️⃣ Unzip project and detect root folder
+      # 3️⃣ Unzip project
       - name: Unzip Project
         run: |
           unzip -o FloatingDoubleTapProject.zip -d ./project
-          # Detect the first folder inside ./project (project root)
-          PROJECT_DIR=$(find ./project -mindepth 1 -maxdepth 1 -type d | head -n 1)
-          echo "Detected project directory: $PROJECT_DIR"
+          PROJECT_DIR=$(find ./project -mindepth 1 -maxdepth 1 -type d | head -n 1 || echo "./project")
           echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
+          ls $PROJECT_DIR
 
-      # 4️⃣ Set up Java
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-
-      # 5️⃣ Setup Android SDK
+      # 4️⃣ Setup Android SDK
       - name: Setup Android SDK
         run: |
           mkdir -p $HOME/android-sdk/cmdline-tools
@@ -48,15 +40,13 @@ jobs:
           yes | sdkmanager --licenses
           sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
-      # 6️⃣ Make Gradle wrapper executable
-      - name: Make Gradle Wrapper executable
-        run: chmod +x ${{ env.PROJECT_DIR }}/gradlew
+      # 5️⃣ Build APK using installed Gradle
+      - name: Build Debug APK
+        run: |
+          cd ${{ env.PROJECT_DIR }}
+          gradle assembleDebug
 
-      # 7️⃣ Build Debug APK
-      - name: Build APK
-        run: ${{ env.PROJECT_DIR }}/gradlew assembleDebug
-
-      # 8️⃣ Upload APK artifact
+      # 6️⃣ Upload APK artifact
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
