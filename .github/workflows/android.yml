@@ -1,4 +1,4 @@
-name: Build Android APK from ZIP (No Gradle Wrapper)
+name: Build Android APK with Gradle Wrapper
 
 on:
   workflow_dispatch:
@@ -16,17 +16,18 @@ jobs:
       - name: Install tools
         run: |
           sudo apt update
-          sudo apt install -y unzip wget openjdk-17-jdk gradle
+          sudo apt install -y unzip wget openjdk-17-jdk
 
       # 3️⃣ Unzip project
       - name: Unzip Project
         run: |
           unzip -o FloatingDoubleTapProject.zip -d ./project
-          PROJECT_DIR=$(find ./project -mindepth 1 -maxdepth 1 -type d | head -n 1 || echo "./project")
+          # Detect project root folder
+          PROJECT_DIR=$(find ./project -mindepth 1 -maxdepth 1 -type d | head -n 1)
           echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
           ls $PROJECT_DIR
 
-      # 4️⃣ Setup Android SDK
+      # 4️⃣ Set up Android SDK
       - name: Setup Android SDK
         run: |
           mkdir -p $HOME/android-sdk/cmdline-tools
@@ -40,13 +41,17 @@ jobs:
           yes | sdkmanager --licenses
           sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
-      # 5️⃣ Build APK using installed Gradle
-      - name: Build Debug APK
+      # 5️⃣ Make Gradle wrapper executable
+      - name: Make Gradle Wrapper executable
+        run: chmod +x ${{ env.PROJECT_DIR }}/gradlew
+
+      # 6️⃣ Build Debug APK
+      - name: Build APK
         run: |
           cd ${{ env.PROJECT_DIR }}
-          gradle assembleDebug
+          ./gradlew assembleDebug
 
-      # 6️⃣ Upload APK artifact
+      # 7️⃣ Upload APK artifact
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
