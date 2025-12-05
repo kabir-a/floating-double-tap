@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Android CI
 
 on:
   workflow_dispatch:
@@ -8,52 +8,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout repository
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      # 2️⃣ Install dependencies
-      - name: Install tools
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Make gradlew executable
+        run: chmod +x ./FloatingDoubleTapProject/gradlew
+
+      - name: Build Debug APK
         run: |
-          sudo apt update
-          sudo apt install -y unzip wget openjdk-17-jdk
-
-      # 3️⃣ Unzip uploaded project
-      - name: Unzip Project
-        run: |
-          unzip -o FloatingDoubleTapProject.zip -d ./project
-          PROJECT_DIR=$(find ./project -mindepth 1 -maxdepth 1 -type d | head -n 1)
-          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
-          echo "Project root detected: $PROJECT_DIR"
-          ls -R $PROJECT_DIR
-
-      # 4️⃣ Install Android SDK
-      - name: Setup Android SDK
-        run: |
-          mkdir -p $HOME/android-sdk/cmdline-tools
-          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
-          unzip cmdline-tools.zip -d $HOME/android-sdk/cmdline-tools
-          mkdir -p $HOME/android-sdk/cmdline-tools/latest
-          mv $HOME/android-sdk/cmdline-tools/cmdline-tools/* $HOME/android-sdk/cmdline-tools/latest/
-          export ANDROID_HOME=$HOME/android-sdk
-          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
-          export PATH=$ANDROID_HOME/platform-tools:$PATH
-          yes | sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-
-      # 5️⃣ Make Gradle wrapper executable
-      - name: Make Gradle Wrapper executable
-        run: chmod +x ${{ env.PROJECT_DIR }}/gradlew
-
-      # 6️⃣ Build the APK (APP MODULE ONLY)
-      - name: Build APK
-        run: |
-          cd ${{ env.PROJECT_DIR }}
+          cd FloatingDoubleTapProject
           ./gradlew :app:assembleDebug
 
-      # 7️⃣ Upload APK artifact
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
-          name: app-debug.apk
-          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/app-debug.apk
+          name: debug-apk
+          path: FloatingDoubleTapProject/app/build/outputs/apk/debug/*.apk
